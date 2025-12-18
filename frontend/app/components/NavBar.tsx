@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/", label: "Dashboard" },
+  { href: "/", label: "Home" },
+  { href: "/#upload", label: "Upload" },
+  { href: "/#about", label: "About" },
   { href: "/videos", label: "History" },
 ];
 
@@ -13,10 +15,10 @@ export function NavBar() {
 
   return (
     <header className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 backdrop-blur">
-      <div className="text-sm font-semibold tracking-tight text-slate-50">
+      <div className="text-base font-semibold tracking-tight text-slate-50">
         VehiclereID
       </div>
-      <nav className="flex gap-1 text-xs sm:text-sm">
+      <nav className="flex gap-1 text-sm sm:text-base">
         {links.map((link) => {
           const active =
             link.href === "/"

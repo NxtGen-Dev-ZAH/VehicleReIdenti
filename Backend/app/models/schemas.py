@@ -31,6 +31,10 @@ class VideoJob(VideoJobBase):
     original_filename: str
     storage_path: str
     error_message: str | None = None
+    progress: int = 0
+    duration_ms: int | None = None
+    artifact_dir: str | None = None
+    log_path: str | None = None
 
     class Config:
         from_attributes = True
@@ -40,6 +44,7 @@ class VideoJobListItem(BaseModel):
     id: int
     title: str
     status: ProcessingStatus
+    progress: int = 0
     created_at: datetime
 
     class Config:
@@ -55,6 +60,11 @@ class VideoResult(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class VideoResultWithArtifacts(VideoResult):
+    artifacts: list[str] | None = None
+    metrics: dict[str, Any] | None = None
 
 
 class ErrorResponse(BaseModel):

@@ -10,6 +10,7 @@ A full-stack application for analyzing and re-identifying vehicles in video foot
 - **RESTful API**: Clean, versioned API endpoints for video management
 - **Modern UI**: Built with Next.js 16, React 19, and Tailwind CSS
 - **Database Integration**: SQLAlchemy-based data persistence for jobs and results
+- **Observability**: Structured logs, progress telemetry, and downloadable artifacts for each job
 
 ## 📋 Project Structure
 
@@ -87,6 +88,28 @@ uv run uvicorn main:app --reload
 
 The API will be available at `http://localhost:8000`
 
+### ML pipeline & ModelCode configuration
+
+The backend loads pretrained detectors and gallery embeddings from the `ModelCode/` workspace. You can customize the defaults through environment variables (all paths are relative to the repo root by default):
+
+| Setting | Description | Default |
+| --- | --- | --- |
+| `MODEL_WEIGHTS_PATH` | Torch checkpoint for the re-identification backbone | `ModelCode/weights/anet_stage2_final.pth` |
+| `YOLO_WEIGHTS_PATH` | Optional YOLOv8 weights for vehicle detection | `ModelCode/pk/runs/parking_space_v1/weights/best.pt` |
+| `GALLERY_FEATURES_PATH` / `GALLERY_NAMES_PATH` | `.npy` files with gallery embeddings + names | `ModelCode/outputs/*` |
+| `FRAME_SAMPLING_STRIDE` | Analyze every Nth frame | `5` |
+| `MAX_FRAMES_PER_JOB` | Safety cap for long videos | `200` |
+
+To generate gallery embeddings from the provided ModelCode scripts:
+
+```bash
+cd ModelCode
+python src/extract_gallery.py
+python src/extract_query.py  # optional, for evaluation
+```
+
+The extractor uses a ResNet50 backbone by default, but if you have a trained ANet checkpoint you can drop it into `ModelCode/weights` and update `MODEL_WEIGHTS_PATH`.
+
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
@@ -103,7 +126,12 @@ yarn install
 pnpm install
 ```
 
-3. Run the development server:
+3. Configure the backend URL (defaults to `http://localhost:8000`) by creating `frontend/.env.local`:
+```bash
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+```
+
+4. Run the development server:
 ```bash
 npm run dev
 # or
@@ -113,6 +141,17 @@ pnpm dev
 ```
 
 The application will be available at `http://localhost:3000`
+
+### 🔍 Smoke test the pipeline
+
+With both backend (`uv run uvicorn main:app --reload`) and frontend (`npm run dev`) running, execute the automated smoke test to validate the end-to-end flow:
+
+```bash
+cd Backend
+scripts/run_smoke_test.py path/to/sample.mp4
+```
+
+The script uploads the clip via the public API, polls until the job finishes, prints the summary/metrics, and surfaces the latest log entries. Use the `--api` flag if your backend is exposed on a different host/port.
 
 ## 📡 API Endpoints
 
@@ -124,6 +163,9 @@ The application will be available at `http://localhost:3000`
 - `GET /api/v1/videos` - List video jobs (with pagination and status filtering)
 - `GET /api/v1/videos/{job_id}` - Get job details
 - `GET /api/v1/videos/{job_id}/result` - Get analysis result once processing completes
+- `GET /api/v1/videos/{job_id}/logs` - Stream structured log entries for a job (supports `limit`)
+- `GET /api/v1/videos/{job_id}/artifacts` - List generated artifacts (thumbnails, overlays) with signed URLs
+- `GET /api/v1/videos/{job_id}/artifacts/{filename}` - Download a specific artifact image
 
 ### API Documentation
 
@@ -138,7 +180,8 @@ When the backend is running, you can access:
 3. **Processing**: Video is processed asynchronously in the background
 4. **Analysis**: ML models analyze the video (frame extraction, vehicle detection, etc.)
 5. **Result Storage**: Analysis results are stored in the database
-6. **Completion**: Job status is updated to `completed` with results available
+6. **Observability**: Logs, progress, and artifacts are written to `storage/logs` and `storage/videos/{job_id}/artifacts`
+7. **Completion**: Job status is updated to `completed` with results available via the API/UI
 
 ## 🎯 Future Enhancements
 
@@ -178,11 +221,14 @@ The frontend uses Next.js 16 with the App Router:
 
 ## 📄 License
 
-This project is part of a Final Year Project (FYP). Please refer to the project documentation for licensing information.
+This project is part of a Final Year Project (FYP). 
+Please refer to the project documentation for licensing information.
 
 ## 👥 Authors
+Project Team - Vehicle Re-identification System
 
-- Project Team - Vehicle Re-identification System
+- Zaheer Ahmed ( 22-ARID-738 )
+- Muhammad Ahsan Tayyab ( 22-ARID-816 )
 
 ## 🙏 Acknowledgments
 
