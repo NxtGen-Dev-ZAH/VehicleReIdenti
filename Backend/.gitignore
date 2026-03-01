@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+storage/videos/
+storage/logs/
+
+*.pth

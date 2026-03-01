@@ -68,11 +68,12 @@ function ArtifactGrid({ artifacts }: { artifacts: VideoResultArtifact[] }) {
 }
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function VideoDetailPage({ params }: PageProps) {
-  const jobId = Number(params.id);
+  const { id } = await params;
+  const jobId = Number(id);
   if (Number.isNaN(jobId)) {
     notFound();
   }
