@@ -62,8 +62,13 @@ class VideoResult(BaseModel):
         from_attributes = True
 
 
+class VideoResultArtifact(BaseModel):
+    filename: str
+    url: str
+
+
 class VideoResultWithArtifacts(VideoResult):
-    artifacts: list[str] | None = None
+    artifacts: list[VideoResultArtifact] | None = None
     metrics: dict[str, Any] | None = None
 
 
