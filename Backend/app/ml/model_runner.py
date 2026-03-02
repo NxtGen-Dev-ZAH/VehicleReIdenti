@@ -9,12 +9,8 @@ from typing import Any
 import cv2  # type: ignore
 import numpy as np
 
-try:  # pragma: no cover - optional dependency
-    from ultralytics import YOLO  # type: ignore
-except Exception:  # pragma: no cover
-    YOLO = None
-
 from app.ml.config import DEFAULT_MODEL_CONFIG, ModelConfig
+from app.ml.detector import build_detector
 from app.ml.feature_extractor import ResNetFeatureExtractor
 from app.ml.gallery_index import GalleryIndex, GalleryMatch
 
@@ -64,35 +60,15 @@ class ModelRunner:
             features_path=self.config.gallery_features_path,
             names_path=self.config.gallery_names_path,
         )
-        self.detector = self._build_detector()
+        self.detector = build_detector(self.config)
         logger.info(
             "ModelRunner initialized",
             extra={
                 "device": self.config.device,
                 "gallery_size": self.gallery.size,
-                "detector": bool(self.detector),
+                "detector": self.detector.name,
             },
         )
-
-    def _build_detector(self):
-        weights_path = self.config.yolo_weights_path
-        if not weights_path or not Path(weights_path).exists():
-            if YOLO is None:
-                logger.warning("YOLO detector unavailable. Falling back to full-frame crops.")
-            else:
-                logger.warning(
-                    "YOLO weights not found. Falling back to full-frame crops.",
-                    extra={"weights": str(weights_path)},
-                )
-            return None
-        if YOLO is None:
-            logger.warning("ultralytics.YOLO is not installed. Detector disabled.")
-            return None
-        try:
-            return YOLO(str(weights_path))
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to load YOLO detector", extra={"error": str(exc)})
-            return None
 
     def run(self, video_path: Path, artifacts_dir: Path) -> ModelRunResult:
         if not Path(video_path).exists():
@@ -149,6 +125,7 @@ class ModelRunner:
             "detections": len(detections),
             "elapsed_sec": round(elapsed, 2),
             "gallery_size": self.gallery.size,
+            "detector": self.detector.name,
         }
 
         logger.info(
@@ -166,39 +143,17 @@ class ModelRunner:
 
     def _detect(self, frame: np.ndarray, frame_idx: int, fps: float) -> list[_VehicleDetection]:
         timestamp = frame_idx / max(fps, 1e-3)
-        if self.detector is None:
-            h, w, _ = frame.shape
-            return [
-                _VehicleDetection(
-                    crop=frame.copy(),
-                    bbox=(0, 0, w, h),
-                    confidence=0.5,
-                    frame_idx=frame_idx,
-                    timestamp=timestamp,
-                    frame_snapshot=frame.copy(),
-                )
-            ]
-
         detections: list[_VehicleDetection] = []
         try:
-            results = self.detector(frame, verbose=False)[0]
-            for box in results.boxes:
-                conf = float(box.conf.item())
-                if conf < 0.25:
-                    continue
-                x1, y1, x2, y2 = (int(v) for v in box.xyxy[0])
-                x1 = max(0, x1)
-                y1 = max(0, y1)
-                x2 = min(frame.shape[1], x2)
-                y2 = min(frame.shape[0], y2)
-                if x2 - x1 < 5 or y2 - y1 < 5:
-                    continue
+            raw_detections = self.detector.detect(frame)
+            for raw in raw_detections:
+                x1, y1, x2, y2 = raw.bbox
                 crop = frame[y1:y2, x1:x2].copy()
                 detections.append(
                     _VehicleDetection(
                         crop=crop,
-                        bbox=(x1, y1, x2, y2),
-                        confidence=conf,
+                        bbox=raw.bbox,
+                        confidence=raw.confidence,
                         frame_idx=frame_idx,
                         timestamp=timestamp,
                         frame_snapshot=frame.copy(),

@@ -21,8 +21,11 @@ def configure_logging() -> None:
 
     settings.LOG_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
+    level_name = settings.LOG_LEVEL.upper()
+    level = logging._nameToLevel.get(level_name, logging.INFO)
+
     logging.basicConfig(
-        level=logging.INFO,
+        level=level,
         format="%(message)s",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
@@ -33,7 +36,7 @@ def configure_logging() -> None:
             structlog.processors.add_log_level,
             structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+        wrapper_class=structlog.make_filtering_bound_logger(level),
         cache_logger_on_first_use=True,
     )
     _LOGGING_CONFIGURED = True

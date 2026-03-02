@@ -32,6 +32,20 @@ def analyze_video(db: Session, job: VideoJobORM) -> VideoResult:
     start = time.perf_counter()
     runner = get_model_runner()
     log_job_event(job.id, "model_loading", device=runner.config.device)
+    log_job_event(
+        job.id,
+        "detector_config",
+        backend=runner.config.detector_backend,
+        weights=str(runner.config.yolo_weights_path) if runner.config.yolo_weights_path else None,
+        conf=runner.config.detection_confidence,
+        iou=runner.config.detection_iou,
+        classes=runner.config.detection_class_ids,
+        max_det=runner.config.detection_max_detections,
+        min_box=runner.config.detection_min_box_size,
+        frame_stride=runner.config.frame_stride,
+        max_frames=runner.config.max_frames,
+        batch_size=runner.config.batch_size,
+    )
 
     try:
         result = runner.run(video_path=video_path, artifacts_dir=artifact_dir)
@@ -52,6 +66,14 @@ def analyze_video(db: Session, job: VideoJobORM) -> VideoResult:
         summary=result.summary,
         metrics=result.metrics,
     )
+    if not result.detections:
+        log_job_event(job.id, "detector_no_detections")
+    else:
+        sample = [
+            {"bbox": det.bbox, "conf": det.confidence}
+            for det in result.detections[:3]
+        ]
+        log_job_event(job.id, "detector_sample", count=len(result.detections), sample=sample)
 
     db_result = _upsert_result(db, job.id, result)
     job.progress = 100

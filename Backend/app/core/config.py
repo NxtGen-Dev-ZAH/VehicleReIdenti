@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     YOLO_WEIGHTS_PATH: Path | None = BASE_DIR / "ModelCode" / "pk" / "runs" / "parking_space_v1" / "weights" / "best.pt"
     GALLERY_FEATURES_PATH: Path | None = BASE_DIR / "ModelCode" / "outputs" / "gallery_features.npy"
     GALLERY_NAMES_PATH: Path | None = BASE_DIR / "ModelCode" / "outputs" / "gallery_names.npy"
+    DETECTOR_BACKEND: str = "yolo"
+    DETECTION_CONFIDENCE: float = 0.25
+    DETECTION_IOU_THRESHOLD: float = 0.45
+    DETECTION_CLASS_IDS: list[int] | None = None
+    DETECTION_MAX_DETECTIONS: int = 200
+    DETECTION_MIN_BOX_SIZE: int = 5
+    LOG_LEVEL: str = "INFO"
 
     FRAME_SAMPLING_STRIDE: int = 5  # process every Nth frame
     MAX_FRAMES_PER_JOB: int = 200

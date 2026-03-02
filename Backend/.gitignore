@@ -13,3 +13,4 @@ storage/videos/
 storage/logs/
 
 *.pth
+*.pt

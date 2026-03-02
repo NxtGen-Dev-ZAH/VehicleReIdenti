@@ -97,6 +97,12 @@ The backend loads pretrained detectors and gallery embeddings from the `ModelCod
 | `MODEL_WEIGHTS_PATH` | Torch checkpoint for the re-identification backbone | `ModelCode/weights/anet_stage2_final.pth` |
 | `YOLO_WEIGHTS_PATH` | Optional YOLOv8 weights for vehicle detection | `ModelCode/pk/runs/parking_space_v1/weights/best.pt` |
 | `GALLERY_FEATURES_PATH` / `GALLERY_NAMES_PATH` | `.npy` files with gallery embeddings + names | `ModelCode/outputs/*` |
+| `DETECTOR_BACKEND` | Detection backend (`yolo` or fallback mode) | `yolo` |
+| `DETECTION_CONFIDENCE` | Minimum confidence score for detector boxes | `0.25` |
+| `DETECTION_IOU_THRESHOLD` | NMS IoU threshold passed to detector | `0.45` |
+| `DETECTION_CLASS_IDS` | Optional class-id allow list (JSON array) | `null` |
+| `DETECTION_MAX_DETECTIONS` | Max boxes returned per frame | `200` |
+| `DETECTION_MIN_BOX_SIZE` | Ignore tiny boxes below this pixel size | `5` |
 | `FRAME_SAMPLING_STRIDE` | Analyze every Nth frame | `5` |
 | `MAX_FRAMES_PER_JOB` | Safety cap for long videos | `200` |
 
