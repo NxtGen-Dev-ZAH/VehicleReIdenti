@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.core.config import settings
@@ -9,15 +9,13 @@ from app.core.config import settings
 def _resolve_device(device_pref: str) -> str:
     if device_pref != "auto":
         return device_pref
-
     try:
         import torch
-
         if torch.cuda.is_available():
             return "cuda"
-        if torch.backends.mps.is_available():  # type: ignore[attr-defined]
+        if torch.backends.mps.is_available():
             return "mps"
-    except Exception:  # pragma: no cover - best-effort detection
+    except Exception:
         pass
     return "cpu"
 
@@ -38,6 +36,13 @@ class ModelConfig:
     max_frames: int
     batch_size: int
     device: str
+    reid_similarity_threshold: float
+    # TransReID architecture params
+    transreid_num_classes: int
+    transreid_num_attributes: int
+    transreid_attr_classes: list[int]
+    transreid_feature_dim: int
+    transreid_camera_num: int
 
     @classmethod
     def from_settings(cls) -> "ModelConfig":
@@ -56,6 +61,12 @@ class ModelConfig:
             max_frames=settings.MAX_FRAMES_PER_JOB,
             batch_size=settings.ML_BATCH_SIZE,
             device=_resolve_device(settings.ML_DEVICE),
+            reid_similarity_threshold=settings.REID_SIMILARITY_THRESHOLD,
+            transreid_num_classes=settings.TRANSREID_NUM_CLASSES,
+            transreid_num_attributes=settings.TRANSREID_NUM_ATTRIBUTES,
+            transreid_attr_classes=settings.TRANSREID_ATTR_CLASSES,
+            transreid_feature_dim=settings.TRANSREID_FEATURE_DIM,
+            transreid_camera_num=settings.TRANSREID_CAMERA_NUM,
         )
 
 

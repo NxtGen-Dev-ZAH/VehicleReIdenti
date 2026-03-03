@@ -21,6 +21,3 @@ export function Card({ title, children, className = "" }: CardProps) {
   );
 }
 
-
-
-

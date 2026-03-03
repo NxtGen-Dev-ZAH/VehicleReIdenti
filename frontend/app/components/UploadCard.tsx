@@ -10,10 +10,16 @@ export function UploadCard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastJobId, setLastJobId] = useState<number | null>(null);
+
+  function handleFileSelected(selected: File | null) {
+    setFile(selected);
+    if (selected) setError(null);
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -74,19 +80,45 @@ export function UploadCard() {
         </div>
 
         <div className="space-y-2 text-sm">
-          <label className="block text-slate-300">
-            Video file
-            <input
-              type="file"
-              accept="video/*"
-              className="mt-1 block w-full text-xs text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-100 hover:file:bg-slate-700"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </label>
-          <p className="text-xs text-slate-500">
-            Supported: common video formats. Large files may take longer to
-            process.
-          </p>
+          <label className="block text-slate-300">Video file</label>
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              handleFileSelected(e.dataTransfer.files?.[0] ?? null);
+            }}
+            className={[
+              "rounded-lg border border-dashed p-3 transition",
+              dragOver
+                ? "border-indigo-400 bg-indigo-500/10"
+                : "border-slate-700 bg-slate-900/50",
+            ].join(" ")}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex cursor-pointer items-center rounded-full bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 transition hover:bg-slate-700">
+                Choose file
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={(e) => handleFileSelected(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              <span className="text-xs text-slate-400">
+                or drag and drop a video here
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              {file
+                ? `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`
+                : "Supported: common video formats. Large files may take longer to process."}
+            </p>
+          </div>
         </div>
 
         {error && (

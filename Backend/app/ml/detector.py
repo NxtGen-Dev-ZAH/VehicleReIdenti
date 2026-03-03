@@ -76,8 +76,9 @@ class YoloDetector(BaseDetector):
                         class_id=class_id,
                     )
                 )
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.error("YOLO detector failure", extra={"error": str(exc)})
+        except Exception as exc:
+            import traceback
+            logger.error("YOLO detector failure:\n" + traceback.format_exc())
         return detections
 
 

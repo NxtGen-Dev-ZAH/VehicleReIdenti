@@ -201,3 +201,49 @@ export async function getVideoArtifacts(jobId: number): Promise<VideoResultArtif
     url: makeAbsoluteUrl(artifact.url),
   }));
 }
+
+// ── Re-ID Types ──────────────────────────────────────────
+export interface ReIDGroup {
+  vehicle_id: string;
+  detection_count: number;
+  best_score: number;
+  first_seen: number;
+  last_seen: number;
+  reidentified?: boolean;
+}
+
+export interface CameraLocation {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+export interface VehiclePath {
+  vehicle_id: string;
+  seen_camera_a: boolean;
+  seen_camera_b: boolean;
+  camera_a_time: number | null;
+  camera_b_time: number | null;
+  reidentified: boolean;
+}
+
+export interface TrajectoryData {
+  camera_a: CameraLocation;
+  camera_b: CameraLocation;
+  vehicle_paths: VehiclePath[];
+  total_vehicles: number;
+  reidentified_across_cameras: number;
+}
+
+export interface ReIDResult {
+  job_id: number;
+  unique_vehicles: number;
+  reid_groups: ReIDGroup[];
+  trajectory: TrajectoryData;
+  summary: string;
+}
+
+export async function getReIDResult(jobId: number): Promise<ReIDResult> {
+  return request<ReIDResult>(`/videos/${jobId}/reid`);
+}
