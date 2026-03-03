@@ -50,4 +50,5 @@ htmlcov/
 .env*.local
 
 
-
+updated_backend/
+updated_frontend/
